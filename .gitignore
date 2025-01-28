@@ -68,3 +68,6 @@ venv.bak/
 
 # VSCode
 .vscode/settings.json
+
+.conda/
+.vscode/

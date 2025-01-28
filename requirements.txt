@@ -1,4 +1,9 @@
 pydicom
 numpy
+nibabel
+pandas
 opencv-python>=4.0.0
+matplotlib
 dataclasses
+SimpleITK
+scikit-image

@@ -68,6 +68,20 @@ class RTStruct:
             ds_helper.create_rtroi_observation(roi_data)
         )
 
+    def del_roi_by_name(self, name: str):
+        roi_index = None
+        for i, roi in enumerate(self.ds.StructureSetROISequence):
+            if roi.ROIName == name:
+                roi_index = i
+                break
+
+        if roi_index is None:
+            return None
+
+        self.ds.StructureSetROISequence.pop(roi_index)
+        self.ds.ROIContourSequence.pop(roi_index)
+        self.ds.RTROIObservationsSequence.pop(roi_index)
+        
     def validate_mask(self, mask: np.ndarray) -> bool:
         if mask.dtype != bool:
             raise RTStruct.ROIException(
@@ -116,6 +130,18 @@ class RTStruct:
 
         raise RTStruct.ROIException(f"ROI of name `{name}` does not exist in RTStruct")
 
+    def modify_roi_name_and_color(self, old_name, new_name, new_color):
+        # Modify the ROI name and color
+        for structure_roi in self.ds.StructureSetROISequence:
+            if structure_roi.ROIName == old_name:
+                structure_roi.ROIName = new_name
+                # structure_roi.ROIColor = new_color
+        for roi_contour in self.ds.ROIContourSequence:
+            roi_contour.ROIDisplayColor = new_color
+        # for roi_observation in self.ds.RTROIObservationsSequence:
+        #     roi_observation.ROIDisplayColor = new_color
+        return
+    
     def save(self, file_path: str):
         """
         Saves the RTStruct with the specified name / location
