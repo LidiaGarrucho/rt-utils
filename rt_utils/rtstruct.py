@@ -142,6 +142,36 @@ class RTStruct:
         #     roi_observation.ROIDisplayColor = new_color
         return
     
+    def get_roi_names_and_numbers(self):
+        """
+        Returns a list of the names of all ROI within the RTStruct
+        """
+
+        if not self.ds.StructureSetROISequence:
+            return []
+
+        return [
+            structure_roi.ROIName for structure_roi in self.ds.StructureSetROISequence
+        ], [
+            structure_roi.ROINumber for structure_roi in self.ds.StructureSetROISequence
+        ]
+    
+    def get_roi_mask_by_number(self, number) -> np.ndarray:
+        """
+        Returns the 3D binary mask of the ROI with the given input number
+        """
+
+        for structure_roi in self.ds.StructureSetROISequence:
+            if structure_roi.ROINumber == number:
+                contour_sequence = ds_helper.get_contour_sequence_by_roi_number(
+                    self.ds, structure_roi.ROINumber
+                )
+                return image_helper.create_series_mask_from_contour_sequence(
+                    self.series_data, contour_sequence
+                )
+
+        raise RTStruct.ROIException(f"ROI of number `{number}` does not exist in RTStruct")
+    
     def save(self, file_path: str):
         """
         Saves the RTStruct with the specified name / location
