@@ -81,6 +81,20 @@ class RTStruct:
         self.ds.StructureSetROISequence.pop(roi_index)
         self.ds.ROIContourSequence.pop(roi_index)
         self.ds.RTROIObservationsSequence.pop(roi_index)
+    
+    def del_roi_by_number(self, number: str):
+        roi_index = None
+        for i, roi in enumerate(self.ds.StructureSetROISequence):
+            if roi.ROINumber == number:
+                roi_index = i
+                break
+
+        if roi_index is None:
+            return None
+
+        self.ds.StructureSetROISequence.pop(roi_index)
+        self.ds.ROIContourSequence.pop(roi_index)
+        self.ds.RTROIObservationsSequence.pop(roi_index)
         
     def validate_mask(self, mask: np.ndarray) -> bool:
         if mask.dtype != bool:

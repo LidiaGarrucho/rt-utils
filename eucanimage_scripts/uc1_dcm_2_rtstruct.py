@@ -24,17 +24,12 @@ if __name__ == "__main__":
     save_debug_files = True
     # Isotropic automatic segmentations
     output_labels = '/mnt/sdc1/EUCanImage/UC1/test_case_4_cmrad/labels_UC1.csv'
-    output_path = '/mnt/sdc1/EUCanImage/UC1/test_case_4_cmrad/rt_struct_test'
+    output_path = '/mnt/sdc1/EUCanImage/UC1/test_case_4_cmrad/rt_struct_test2'
 
     patient_ids = ['ECI_KAU_S0002']
-    auto_seg_folder = '/media/lidia/data2/eucanimage_dimitri/sub_zscored_resampled/val_split/output_107_1k'
-    
-    dcm_paths = ['/mnt/sdc1/EUCanImage/UC1/test_case_4_cmrad/exp_ECI_KAU_S0002_20210602/scans/19-t1_vibe_fs_tra_bh_po_DELAYED/resources/DICOM/files'
-                 ]
-    seg_paths = ['/mnt/sdc1/EUCanImage/UC1/test_case_4_cmrad/exp_ECI_KAU_S0002_20210602/scans/19-t1_vibe_fs_tra_bh_po_DELAYED/resources/annotations/files/event_caac41a2-79d9-43f1-8aa8-150aded18a4d/segmentation.dcm'
-                 ]
-    auto_seg_paths = ['/mnt/sdc1/EUCanImage/UC1/test_case_4_cmrad/automatic_euc_0280.nii.gz'
-                    ]
+    dcm_paths = ['/mnt/sdc1/EUCanImage/UC1/test_case_4_cmrad/exp_ECI_KAU_S0002_20210602/scans/19-t1_vibe_fs_tra_bh_po_DELAYED/resources/DICOM/files']
+    seg_paths = ['/mnt/sdc1/EUCanImage/UC1/test_case_4_cmrad/exp_ECI_KAU_S0002_20210602/scans/19-t1_vibe_fs_tra_bh_po_DELAYED/resources/annotations/files/event_caac41a2-79d9-43f1-8aa8-150aded18a4d/segmentation.dcm']
+    auto_seg_paths = ['/mnt/sdc1/EUCanImage/UC1/test_case_4_cmrad/automatic_euc_0280.nii.gz']
     
     np.random.seed(42)
     
