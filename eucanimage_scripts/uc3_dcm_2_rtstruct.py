@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     save_debug_files = True
     # Isotropic automatic segmentations
-    output_path = '/mnt/sdc1/EUCanImage/UC3/ECI_GUM_S1664_export/rt_struct_test'
+    output_path = '/mnt/sdc1/EUCanImage/UC3/ECI_GUM_S1664_export/rt_struct_test2'
 
     patient_ids = ['ECI_GUM_S1664']
 
@@ -31,12 +31,16 @@ if __name__ == "__main__":
                  ]
     seg_paths = ['/mnt/sdc1/EUCanImage/UC3/ECI_GUM_S1664_export/BMIAXNAT_E97008/scans/9/resources/1895205/files/event_a8895bc4-cf47-496f-8965-7087da335f9b/segmentation.dcm'
                  ]
+    # Manual segmentations (all the lesions merged L1 + L2 + L3 ....)
+    manual_seg_paths = ['/mnt/sdc1/EUCanImage/UC3/ECI_GUM_S1664_export/manual_merged_segmentation.nii.gz']
+
+    # Automatic segmentations (all the lesions detected)
     auto_seg_paths = ['/mnt/sdc1/EUCanImage/UC3/ECI_GUM_S1664_export/prediction_uncropped.nii.gz']
     
     np.random.seed(42)
     
     df_labels = pd.DataFrame(columns=['patient_id', 'manual_roi', 'auto_roi'])
-    for idx, (dcm_series_path, seg_path, auto_seg_path, patient_id) in enumerate(zip(dcm_paths, seg_paths, auto_seg_paths, patient_ids)):
+    for idx, (dcm_series_path, seg_path, auto_seg_path, manual_seg_path, patient_id) in enumerate(zip(dcm_paths, seg_paths, auto_seg_paths, manual_seg_paths, patient_ids)):
 
         output_path_patient = os.path.join(output_path, patient_id)
         if save_debug_files:
@@ -77,16 +81,13 @@ if __name__ == "__main__":
             print(rtstruct.get_roi_names())
 
         # If ROI Name is not L1, delete it
-        # for mask_name in rtstruct.get_roi_names():
-        #     if mask_name != 'L1':
-        #         rtstruct.del_roi_name(mask_name)
+        for mask_name in rtstruct.get_roi_names():
+            rtstruct.del_roi_by_name(mask_name)
 
-        if len(rtstruct.get_roi_names()) > 1:
-            print(f"More than one segmentation found: {rtstruct.get_roi_names()} - {patient_id}")
-            exit(0)
+        # if len(rtstruct.get_roi_names()) > 1:
+        #     print(f"More than one segmentation found: {rtstruct.get_roi_names()} - {patient_id}")
+        #     exit(0)
 
-        if save_debug_files:
-            print(f'{rtstruct.get_roi_names()}-{patient_id}')
         # Get a 0 or a 1 randomnly:
         random_number = np.random.rand()
         if random_number > 0.5:
@@ -101,48 +102,40 @@ if __name__ == "__main__":
             auto_roi_color = [255, 0, 0]
         
         df_labels.loc[idx] = [patient_id, new_roi_name, auto_roi_name]
-        rtstruct.modify_roi_name_and_color(rtstruct.get_roi_names()[0], new_roi_name, new_roi_color)
 
-        roi_names = rtstruct.get_roi_names()
-        if save_debug_files:
-            for roi_name in roi_names:
-                # Loading the 3D Mask from within the RT Struct
-                mask_3d = np.uint8(rtstruct.get_roi_mask_by_name(roi_name))
-                mask_3d = np.transpose(mask_3d, (1, 0, 2))
-                mask_nifti = nib.Nifti1Image(mask_3d, dicom_affine)
-                mask_nifti = resample_from_to(mask_nifti, dicom_nifti)
-
-                # Save the NIfTI image
-                nib.save(mask_nifti, os.path.join(output_path_patient, f"manual_{roi_name}.nii.gz"))
-                print(f"Saved NIfTI mask file for {patient_id}")
-
-        # Delete any ROIs if needed
-        # for mask_name in rtstruct.get_roi_names():
-        #     rtstruct.del_roi_name(mask_name)
+        # No need to modify the name and color (all lesions removed)
+        # rtstruct.modify_roi_name_and_color(rtstruct.get_roi_names()[0], new_roi_name, new_roi_color)
         
         # Load the prediction NIfTI mask and resample to orgiginal DICOM shape
         sitk_image = sitk.ReadImage(dicom_nifti_path)
-        sitk_mask = sitk.ReadImage(auto_seg_path)
-        dicom_shape = (dicom_images[0].Rows, dicom_images[0].Columns, len(dicom_images))  # DICOM shape (z, y, x)
-        sitk_mask = resample_image(image=sitk_mask, new_size=dicom_shape, interpolator=sitk.sitkNearestNeighbor)
-        sitk_mask.CopyInformation(sitk_image)
-        # Save the resampled mask
-        if save_debug_files:
-            mask_nifti_path = os.path.join(output_path_patient, f"prediction_{auto_roi_name}_mask.nii.gz")
-            sitk.WriteImage(sitk_mask, mask_nifti_path)
 
-        # Load mask using nibabel
-        mask_nifti = nib.load(mask_nifti_path)
-        mask_3d = mask_nifti.get_fdata()
-
-        # Turn the pixel array into a 3D numpy array of booleans
-        mask_3d = mask_3d.astype(bool)
-
-        # Add another ROI, this time setting the color, description, and name
-        rtstruct.add_roi(
-                        mask=mask_3d, 
-                        color=auto_roi_color, # RGB color  yellow: [255, 255, 0], red: [255, 0, 0]
-                        name=auto_roi_name)
+        for append_mask_path, mask_type in zip([auto_seg_path, manual_seg_path], ['prediction', 'manual_merged']):
+            sitk_mask = sitk.ReadImage(append_mask_path)
+            dicom_shape = (dicom_images[0].Rows, dicom_images[0].Columns, len(dicom_images))  # DICOM shape (z, y, x)
+            sitk_mask = resample_image(image=sitk_mask, new_size=dicom_shape, interpolator=sitk.sitkNearestNeighbor)
+            sitk_mask.CopyInformation(sitk_image)
+            # Save the resampled mask
+            if save_debug_files:
+                mask_nifti_path = os.path.join(output_path_patient, f"{mask_type}_{auto_roi_name}_mask.nii.gz")
+                sitk.WriteImage(sitk_mask, mask_nifti_path)
+            # Load mask using nibabel
+            mask_nifti = nib.load(mask_nifti_path)
+            mask_3d = mask_nifti.get_fdata()
+            # Turn the pixel array into a 3D numpy array of booleans
+            mask_3d = mask_3d.astype(bool)
+            if mask_type == 'prediction':
+                # Add another ROI, this time setting the color, description, and name
+                rtstruct.add_roi(
+                                mask=mask_3d, 
+                                color=auto_roi_color, # RGB color  yellow: [255, 255, 0], red: [255, 0, 0]
+                                name=auto_roi_name)
+            else:
+                # Add another ROI, this time setting the color, description, and name
+                rtstruct.add_roi(
+                                mask=mask_3d, 
+                                color=new_roi_color, # RGB color  yellow: [255, 255, 0], red: [255, 0, 0]
+                                name=new_roi_name)
+        
         if save_debug_files:
             rtstruct.save(os.path.join(output_path_patient, f'{patient_id}_rtstruct.dcm'))
         else:
